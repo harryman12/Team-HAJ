@@ -261,7 +261,7 @@ public class ReferralDoctor extends Stage {
         Label text = new Label("Email: ");
         TextField email = new TextField();
         email.setPrefWidth(250);
-        Label text1 = new Label("Full Name: ");
+        Label text1 = new Label("Full Name: "); //Arthur//
         TextField name = new TextField("");
         name.setPrefWidth(150);
         Button pullData = new Button("Check for Patient");
@@ -413,10 +413,10 @@ public class ReferralDoctor extends Stage {
                     return;
                 }
                 //End Validation
-                insertPatientIntoDatabase(name.getText(), email.getText(), datePicker.getValue().toString(), address.getText(), insurance.getText());
+                insertPatientIntoDatabase(name.getText(), email.getText(), datePicker.getValue().toString(), address.getText(), insurance.getText()); //Arthur talks about database
                 populateTable();
                 for (PatientAlert z : alertsToAddForThisPatient) {
-                    String sql = "INSERT INTO alertsPatientConnector VALUES ( (SELECT patientID FROM patients WHERE full_name = '" + name.getText() + "' AND email = '" + email.getText() + "') , '" + z.getAlertID() + "');";
+                    String sql = "INSERT INTO alertsPatientConnector VALUES ( (SELECT patientID FROM patients WHERE full_name = '" + name.getText() + "' AND email = '" + email.getText() + "') , '" + z.getAlertID() + "');"; //Arthur Database
                     App.executeSQLStatement(sql);
                 }
                 x.close();
@@ -453,7 +453,7 @@ public class ReferralDoctor extends Stage {
     }
 
     private void insertPatientIntoDatabase(String name, String email, String dob, String address, String insurance) {
-        String sql = "INSERT INTO patients(full_name, email, dob, address, insurance) "
+        String sql = "INSERT INTO patients(full_name, email, dob, address, insurance) " //Arthur Database
                 + " VALUES ('" + name + "','" + email + "','" + dob + "','" + address + "','" + insurance + "');";
         App.executeSQLStatement(sql);
 
@@ -585,6 +585,10 @@ public class ReferralDoctor extends Stage {
         x.setWidth(300);
         scene.getStylesheets().add("file:stylesheet.css");
         //
+        Label fullNameLabel = new Label("Full Name: ");             //Arthur
+        TextField fullName = new TextField(z.getFullName());        //
+        HBox fullNameContainer = new HBox(fullNameLabel, fullName); //
+        
         Label emailLabel = new Label("Email: ");
         TextField email = new TextField(z.getEmail());
         HBox emailContainer = new HBox(emailLabel, email);
@@ -635,13 +639,16 @@ public class ReferralDoctor extends Stage {
         ScrollPane s1 = new ScrollPane(patientAlertContainer);
         s1.setPrefHeight(200);
 
-        container.getChildren().addAll(emailContainer, addressContainer, insuranceContainer, s1, submit);
+        container.getChildren().addAll(fullNameContainer, emailContainer, addressContainer, insuranceContainer, s1, submit);
         x.show();
 
         submit.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent eh) {
                 //Validation
+                if (!InputValidation.validateName(fullName.getText())) { //Arthur
+                    return;                                              //
+                }                                                        //
                 if (!InputValidation.validateEmail(email.getText())) {
                     return;
                 }
@@ -655,7 +662,7 @@ public class ReferralDoctor extends Stage {
                 z.setAddress(address.getText());
                 z.setEmail(email.getText());
                 z.setInsurance(insurance.getText());
-                String sql = "UPDATE patients SET email = '" + email.getText() + "', address = '" + address.getText() + "', insurance = '" + insurance.getText() + "' WHERE patientID = '" + z.getPatientID() + "';";
+                String sql = "UPDATE patients SET full_name = '"  + fullName.getText() +  "', email = '" + email.getText() + "', address = '" + address.getText() + "', insurance = '" + insurance.getText() + "' WHERE patientID = '" + z.getPatientID() + "';"; //Arthur
                 App.executeSQLStatement(sql);
                 for (PatientAlert a : alertsToAddForThisPatient) {
                     sql = "INSERT INTO alertsPatientConnector VALUES ( '" + z.getPatientID() + "', '" + a.getAlertID() + "');";
