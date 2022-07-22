@@ -832,8 +832,10 @@ public class ReferralDoctor extends Stage {
         ComboBox dropdown = populateOrdersDropdown();
         Button insertOrder = new Button("Create New Order");
         HBox container = new HBox(text1, dropdown, insertOrder);
+        TextArea orderDesc = new TextArea();
+        orderDesc.getText();
         //End Hidden Containers
-        VBox center = new VBox(container);
+        VBox center = new VBox(container, orderDesc);
 
         container.setSpacing(10);
         center.setAlignment(Pos.CENTER);
