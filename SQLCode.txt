@@ -29,7 +29,7 @@ CREATE TABLE statusCode ( statusID INT PRIMARY KEY, status VARCHAR(45) );
 
 CREATE TABLE orderCodes ( orderID INT PRIMARY KEY DEFAULT unique_rowid(), orders VARCHAR(45) UNIQUE,  cost REAL  );
 
-CREATE TABLE patientOrders ( patientID INT , orderCodeID INT NOT NULL , enabled INT DEFAULT 1 );
+CREATE TABLE patientOrders ( patientID INT , orderCodeID INT NOT NULL , enabled INT DEFAULT 1, orderInstr VARCHAR );
 
 CREATE TABLE images ( imageID INT PRIMARY KEY DEFAULT unique_rowid(), patientID INT, apptID INT, image BLOB );
 
