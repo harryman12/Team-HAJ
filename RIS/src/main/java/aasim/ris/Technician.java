@@ -34,6 +34,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
@@ -189,7 +190,13 @@ public class Technician extends Stage {
                     z.placeholder.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
                         public void handle(ActionEvent e) {
-                            techPageTwo(z.getPatientID(), z.getApptID(), z.getFullName(), z.getOrder());
+                            try {
+                                //String sql = "ALTER TABLE patientorders ADD CONSTRAINT fk_patientID FOREIGN KEY (patientID) REFERENCES patients(patientid);";
+                                //Statement stmt = conn.createStatement();
+                                techPageTwo(z.getPatientID(), z.getApptID(), z.getFullName(), z.getOrder());
+                            } catch (SQLException ex) {
+                                Logger.getLogger(Technician.class.getName()).log(Level.SEVERE, null, ex);
+                            }
                         }
                     });
                 } else {
@@ -258,12 +265,52 @@ public class Technician extends Stage {
         main.setCenter(tableContainer);
     }
 
-    private void techPageTwo(String patID, String apptId, String fullname, String order) {
+    class InnerClass {
+
+        String orderInstr;
+
+        public InnerClass(String orderInstr) {
+            this.orderInstr = orderInstr;
+        }
+    }
+
+    TextArea orderDesc = new TextArea();
+
+    private void orderInstr(String patID, String order) {
+        try {
+            Connection conn = ds.getConnection();
+            String sql = "SELECT orderinstr FROM orderinstr WHERE ordercodeID = (SELECT orderID FROM ordercodes WHERE orders = " + "'" + order + "'" + ") AND patientID = " + patID +";";
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            List<InnerClass> list = new ArrayList<InnerClass>();
+
+            while (rs.next()) {
+                //What I receieve:  apptId, patientID, fullname, time, address, insurance, referral, status, order
+                InnerClass inner = new InnerClass(rs.getString("orderInstr"));
+                list.add(inner);
+            }
+            String temp = "";
+            for (InnerClass x : list) {
+                temp += x.orderInstr;
+            }
+            orderDesc.setText(temp);
+                rs.close();
+                stmt.close();
+                conn.close();
+             } catch (SQLException ex) {
+            Logger.getLogger(Technician.class.getName()).log(Level.SEVERE, null, ex);
+
+        } 
+        
+    }
+
+    private void techPageTwo(String patID, String apptId, String fullname, String order) throws SQLException {
         VBox container = new VBox();
         container.setSpacing(10);
         container.setAlignment(Pos.CENTER);
         Label patInfo = new Label("Patient: " + fullname + "\t Order/s Requested: " + order + "\n");
         Label imgInfo = new Label("Images Uploaded: " + fullname + "\t Order/s Requested: " + order);
+        orderDesc.setEditable(false);
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("JPG Files", "*.jpg", "*.jpeg"),
                 new FileChooser.ExtensionFilter("GIF Files", "*.gif"),
@@ -277,7 +324,11 @@ public class Technician extends Stage {
         HBox buttonContainer = new HBox(cancel, addImg, complete);
         buttonContainer.setAlignment(Pos.CENTER);
         buttonContainer.setSpacing(25);
-        container.getChildren().addAll(patInfo, buttonContainer);
+        String order1 = order;
+        order = order.replaceAll(",", "");
+        order = order.trim();
+        orderInstr(patID, order);
+        container.getChildren().addAll(patInfo, buttonContainer, orderDesc);
         main.setCenter(container);
         //Set Size of Every button in buttonContainer
         complete.setPrefSize(200, 100);
@@ -302,7 +353,7 @@ public class Technician extends Stage {
         complete.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent t) {
-                completeOrder(patID, apptId, order);
+                completeOrder(patID, apptId, order1);
             }
         });
 
