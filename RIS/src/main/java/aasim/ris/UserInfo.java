@@ -77,12 +77,12 @@ public class UserInfo extends Stage {
 
         Label userIDTxt = new Label("ID:");
         TextField userID = new TextField(App.user.getUserID() + "");
-        userID.setEditable(false);
+        userID.setEditable(true);
         VBox c = new VBox(userIDTxt, userID);
 
         Label usernameTxt = new Label("Username:");
         TextField username = new TextField(App.user.getUsername());
-        username.setEditable(false);
+        username.setEditable(true);
         VBox c1 = new VBox(usernameTxt, username);
 
         Label emailTxt = new Label("Email Address:");
