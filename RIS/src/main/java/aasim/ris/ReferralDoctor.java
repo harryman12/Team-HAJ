@@ -2,6 +2,7 @@ package aasim.ris;
 
 import static aasim.ris.App.ds;
 import static aasim.ris.App.url;
+import datastorage.Order;
 import datastorage.Appointment;
 import datastorage.InputValidation;
 import datastorage.Patient;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.scene.control.TextArea;
 import javafx.collections.FXCollections;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
@@ -294,7 +296,7 @@ public class ReferralDoctor extends Stage {
             Label label = new Label(z.getAlert());
             ComboBox dropdown = new ComboBox();
             dropdown.getItems().addAll("Yes", "No");
-            dropdown.setValue("No");
+            dropdown.setValue("Y/N");
 
             HBox temp = new HBox(label, dropdown);
             temp.setSpacing(10);
@@ -389,8 +391,8 @@ public class ReferralDoctor extends Stage {
                 }
 
                 s1.setVisible(true);
-                email.setEditable(false);
-                name.setEditable(false);
+                email.setEditable(true);
+                name.setEditable(true);
                 hiddenContainer1.setVisible(true);
                 hiddenContainer3.setVisible(true);
                 pullData.setVisible(false);
@@ -527,9 +529,13 @@ public class ReferralDoctor extends Stage {
             }
             Label label = new Label(i.getAlert());
             ComboBox dropdown = new ComboBox();
-            dropdown.getItems().addAll("Yes");
-            dropdown.setValue("Yes");
-            dropdown.setEditable(false);
+            //dropdown.getItems().addAll("Yes"); //Arthur
+            if(i.getAlert().equals("Ex: Allergic to peanuts?") || i.getAlert().equals("Allergic to Iodine")) //Arthur
+                dropdown.setValue("Yes"); //Arthur
+            else //Arthur
+                dropdown.setValue("No"); //Arthur
+            //dropdown.setValue(i.getAlert()); //Arthur
+            dropdown.setEditable(true); //Arthur
             HBox temp = new HBox(label, dropdown);
             temp.setSpacing(10);
             temp.setPadding(new Insets(10));
@@ -586,8 +592,8 @@ public class ReferralDoctor extends Stage {
         scene.getStylesheets().add("file:stylesheet.css");
         //
         Label fullNameLabel = new Label("Full Name: ");             //Arthur
-        TextField fullName = new TextField(z.getFullName());        //
-        HBox fullNameContainer = new HBox(fullNameLabel, fullName); //
+        TextField fullName = new TextField(z.getFullName());        //Arthur
+        HBox fullNameContainer = new HBox(fullNameLabel, fullName); //Arthur
         
         Label emailLabel = new Label("Email: ");
         TextField email = new TextField(z.getEmail());
@@ -611,11 +617,7 @@ public class ReferralDoctor extends Stage {
             Label label = new Label(a.getAlert());
             ComboBox dropdown = new ComboBox();
             dropdown.getItems().addAll("Yes", "No");
-            if (allergies.contains(a)) {
-                dropdown.setValue("Yes");
-            } else {
-                dropdown.setValue("No");
-            }
+            dropdown.setValue("Y/N"); //Arthur
             HBox temp = new HBox(label, dropdown);
             temp.setSpacing(10);
             temp.setPadding(new Insets(10));
@@ -639,7 +641,7 @@ public class ReferralDoctor extends Stage {
         ScrollPane s1 = new ScrollPane(patientAlertContainer);
         s1.setPrefHeight(200);
 
-        container.getChildren().addAll(fullNameContainer, emailContainer, addressContainer, insuranceContainer, s1, submit);
+        container.getChildren().addAll(fullNameContainer, emailContainer, addressContainer, insuranceContainer, s1, submit); //Arthur
         x.show();
 
         submit.setOnAction(new EventHandler<ActionEvent>() {
@@ -647,8 +649,8 @@ public class ReferralDoctor extends Stage {
             public void handle(ActionEvent eh) {
                 //Validation
                 if (!InputValidation.validateName(fullName.getText())) { //Arthur
-                    return;                                              //
-                }                                                        //
+                    return;                                              //Arthur
+                }                                                        //Arthur
                 if (!InputValidation.validateEmail(email.getText())) {
                     return;
                 }
@@ -659,6 +661,7 @@ public class ReferralDoctor extends Stage {
                     return;
                 }
                 //End Validation
+                z.setFullName(fullName.getText()); //Arthur
                 z.setAddress(address.getText());
                 z.setEmail(email.getText());
                 z.setInsurance(insurance.getText());
@@ -832,8 +835,8 @@ public class ReferralDoctor extends Stage {
         ComboBox dropdown = populateOrdersDropdown();
         Button insertOrder = new Button("Create New Order");
         HBox container = new HBox(text1, dropdown, insertOrder);
+        // Text area for order instructions to be entered
         TextArea orderDesc = new TextArea();
-        orderDesc.getText();
         //End Hidden Containers
         VBox center = new VBox(container, orderDesc);
 
@@ -860,7 +863,7 @@ public class ReferralDoctor extends Stage {
                         }
                     }
                     //
-                    insertNewOrder(z, dropdown.getValue().toString());
+                    insertNewOrder(z, dropdown.getValue().toString(), orderDesc.getText());
                     x.close();
                 }
             }
@@ -953,9 +956,12 @@ public class ReferralDoctor extends Stage {
         return dropdown;
     }
 
-    private void insertNewOrder(Patient z, String x) {
-        String sql = "INSERT INTO  patientOrders VALUES ('" + z.getPatientID() + "', (SELECT orderID FROM orderCodes WHERE orders = '" + x + "'), '1');";
+    private void insertNewOrder(Patient z, String x, String y) {
+        System.out.println(y);
+        String sql = "INSERT INTO  patientOrders(patientID, orderCodeID, enabled) VALUES ('" + z.getPatientID() + "', (SELECT orderID FROM orderCodes WHERE orders = '" + x + "'), '1' );";
         App.executeSQLStatement(sql);
+        String sql1 = "INSERT INTO  orderInstr(patientID, orderCodeID, orderInstr) VALUES ('" + z.getPatientID() + "', (SELECT orderID FROM orderCodes WHERE orders = '" + x + "'), '" + y + "');";
+        App.executeSQLStatement(sql1);
     }
 
     private void viewRadiologyReport(Patient z, Appointment appt) {
