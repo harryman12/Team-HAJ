@@ -36,6 +36,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
@@ -197,7 +198,7 @@ public class Receptionist extends Stage {
                 + " FROM appointments"
                 + " INNER JOIN statusCode ON appointments.statusCode = statusCode.statusID "
                 + " INNER JOIN patients ON patients.patientID = appointments.patient_id"
-                + " WHERE statusCode < 3"
+                + " WHERE statusCode < 4"
                 + " ORDER BY time ASC;";
 
         try {
@@ -417,7 +418,7 @@ public class Receptionist extends Stage {
         populateTable();
     }
 
-    private void updatePatient(Patient z) {
+     private void updatePatient(Patient z) {
         ArrayList<PatientAlert> paList = populatePaList();
         ArrayList<PatientAlert> allergies = populateAllergies(z);
 
@@ -454,11 +455,7 @@ public class Receptionist extends Stage {
             Text Text = new Text(a.getAlert());
             ComboBox dropdown = new ComboBox();
             dropdown.getItems().addAll("Yes", "No");
-            if (allergies.contains(a)) {
-                dropdown.setValue("Yes");
-            } else {
-                dropdown.setValue("No");
-            }
+            dropdown.setValue("Y/N"); //Arthur
             HBox temp = new HBox(Text, dropdown);
             temp.setSpacing(10);
             temp.setPadding(new Insets(10));
@@ -683,6 +680,13 @@ public class Receptionist extends Stage {
             Text text = new Text("Insert Date: ");
             Text text1 = new Text("Insert Time (HH:MM): ");
             ComboBox hours = new ComboBox();
+            ComboBox patients = populatePatientsDropdown();
+            TextArea emails = new TextArea();
+            emails.setEditable(false);
+            emails.setVisible(false);
+            patients.setPrefWidth(150);
+            emails.setPrefWidth(250);
+            emails.setPrefHeight(30);
 
             for (int i = 0; i < 24; i++) {
                 String temp = "";
@@ -717,7 +721,7 @@ public class Receptionist extends Stage {
             Button submit = new Button("Submit");
             submit.setId("complete");
             //
-            HBox initialContainer = new HBox(patFullName, patEmail, check);
+            HBox initialContainer = new HBox(patients, emails, check);
             initialContainer.setSpacing(10);
             HBox hiddenContainer = new HBox(text, datePicker, text1, time);
             hiddenContainer.setSpacing(10);
@@ -748,13 +752,15 @@ public class Receptionist extends Stage {
             check.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent e) {
-                    if (!InputValidation.validateName(patFullName.getText())) {
+                    emails.setVisible(true);
+                    emails.setText(populateEmailsDropdown(patients.getValue().toString()));
+                    if (!InputValidation.validateName(patients.getValue().toString())) {
                         return;
                     }
-                    if (!InputValidation.validateEmail(patEmail.getText())) {
+                    if (!InputValidation.validateEmail(emails.getText())) {
                         return;
                     }
-                    pat = pullPatientInfo(patFullName.getText(), patEmail.getText());
+                    pat = pullPatientInfo(patients.getValue().toString(), emails.getText());
                     if (pat != null) {
                         check.setVisible(false);
                         Text request = new Text("Orders Requested: ");
@@ -877,6 +883,55 @@ public class Receptionist extends Stage {
                     //What I receieve:  patientID, email, full_name, dob, address, insurance
                     temp = new Patient(rs.getString("patientID"), rs.getString("email"), rs.getString("full_name"), rs.getString("dob"), rs.getString("address"), rs.getString("insurance"));
                 }
+                rs.close();
+                stmt.close();
+                conn.close();
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            return temp;
+        }
+
+        private ComboBox populatePatientsDropdown() {
+
+            String sql = "SELECT DISTINCT full_name FROM patients INNER JOIN patientorders ON patients.patientid = patientorders.patientid;";
+            ComboBox dropdown = new ComboBox();
+            try {
+
+                Connection conn = ds.getConnection();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql);
+                //
+
+                while (rs.next()) {
+                    dropdown.getItems().add(rs.getString("full_name"));
+                }
+                //
+                rs.close();
+                stmt.close();
+                conn.close();
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            return dropdown;
+        }
+
+        private String populateEmailsDropdown(String patients) {
+
+            String sql = "SELECT email FROM patients WHERE full_name = " + "'" + patients + "'" + ";";
+            String temp = "";
+            try {
+
+                Connection conn = ds.getConnection();
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql);
+                System.out.println(rs);
+                //
+
+                while (rs.next()) {
+                    temp = rs.getString("email");
+                }
+                //
                 rs.close();
                 stmt.close();
                 conn.close();
